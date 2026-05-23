@@ -1,47 +1,52 @@
 import os
-import time
-import datetime
 import requests
+import time
+from datetime import datetime
+import pytz
 
-# --- LUTON CONFIGURATION ---
-CITY = "Luton"
-COUNTRY = "UK"
-METHOD = 3 # 3 = Muslim World League calculation method
+# Target timezone for Luton
+local_tz = pytz.timezone("Europe/London")
 
-VIRTUAL_DOORBELL_URL = os.environ.get("VIRTUAL_DOORBELL_URL")
+def get_luton_times():
+    # Fetching exact astronomical prayer times for Luton (Method 3 = Muslim World League / UK standard)
+    url = "https://api.aladhan.com/v1/timingsByCity"
+    params = {"city": "Luton", "country": "United Kingdom", "method": 3} 
+    response = requests.get(url, params=params).json()
+    return response['data']['timings']
 
-def get_prayer_timings():
-    url = f"https://api.aladhan.com/v1/timingsByCity?city={CITY}&country={COUNTRY}&method={METHOD}"
-    try:
-        response = requests.get(url).json()
-        timings = response['data']['timings']
-        return {
-            'Fajr': timings['Fajr'],
-            'Asr': timings['Asr'],
-            'Maghrib': timings['Maghrib'],
-            'Isha': timings['Isha']
-        }
-    except Exception as e:
-        print(f"Error fetching times: {e}")
-        return None
+def trigger_alexa():
+    webhook_url = os.environ.get("VIRTUAL_DOORBELL_URL")
+    if webhook_url:
+        requests.get(webhook_url)
+        print("Trigger successfully sent to Virtual Smart Home!")
+    else:
+        print("Error: VIRTUAL_DOORBELL_URL secret is missing!")
 
-def main():
-    print(f"Fetching prayer times for {CITY}...")
-    prayers = get_prayer_timings()
-    if not prayers: return
+def run():
+    # Detect if you pressed the manual test button on GitHub
+    is_manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+    if is_manual_run:
+        print("Manual test detected! Instantly triggering your Echo speaker...")
+        trigger_alexa()
+        return
 
-    print("Today's Targets (Luton Local Time):", prayers)
-
+    print("Automated tracking started for Luton (BST-aware)...")
     while True:
-        current_time = datetime.datetime.now().strftime("%H:%M")
+        # Get exact current time in Luton
+        now_local = datetime.now(local_tz)
+        current_time_str = now_local.strftime("%H:%M")
         
-        if current_time in prayers.values():
-            prayer_name = [k for k, v in prayers.items() if v == current_time][0]
-            print(f"Time for {prayer_name}! Ringing Alexa...")
-            requests.get(VIRTUAL_DOORBELL_URL)
-            time.sleep(65) # Avoid double triggering
-            
+        timings = get_luton_times()
+        prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
+        
+        for prayer in prayers:
+            # Check if current local time matches the local prayer time
+            if current_time_str == timings[prayer]:
+                print(f"Match found! It is time for {prayer} in Luton. Signaling Alexa...")
+                trigger_alexa()
+                time.sleep(61) # Prevent double triggering
+                
         time.sleep(30)
 
 if __name__ == "__main__":
-    main()
+    run()
