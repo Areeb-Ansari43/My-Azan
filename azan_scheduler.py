@@ -6,6 +6,18 @@ import pytz
 
 local_tz = pytz.timezone("Europe/London")
 
+# Manual offsets in minutes to match Islamic Relief Luton timetable exactly.
+# Based on today's comparison:
+#   API returns Isha 22:04, IR Luton says 22:13 → +9 minutes
+#   Adjust each prayer if needed after testing tomorrow.
+OFFSETS = {
+    "Fajr":    0,
+    "Dhuhr":   0,
+    "Asr":     0,
+    "Maghrib": 0,
+    "Isha":    9,  # API is 9 mins behind IR Luton for Isha
+}
+
 def get_luton_times(for_date=None):
     if for_date is None:
         for_date = date.today()
@@ -22,7 +34,21 @@ def get_luton_times(for_date=None):
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
-        return data["data"]["timings"]
+        timings = data["data"]["timings"]
+
+        # Apply offsets to match Islamic Relief Luton timetable
+        adjusted = {}
+        for prayer, offset in OFFSETS.items():
+            raw = timings[prayer][:5]  # "HH:MM"
+            if offset != 0:
+                h, m = map(int, raw.split(":"))
+                total = h * 60 + m + offset
+                total = total % (24 * 60)
+                adjusted[prayer] = f"{total // 60:02d}:{total % 60:02d}"
+            else:
+                adjusted[prayer] = raw
+
+        return adjusted
     except Exception as e:
         print(f"[ERROR] Could not fetch prayer times: {e}")
         return None
@@ -33,24 +59,20 @@ def trigger_alexa(prayer_name, prayer_time):
         print("[WARN] VIRTUAL_DOORBELL_URL secret is not set.")
         return
     try:
-        # Pass prayer name and time as URL parameters
-        # e.g. https://yourwebhook.com?prayer=Maghrib&time=20:53
         separator = "&" if "?" in webhook_url else "?"
         full_url = f"{webhook_url}{separator}prayer={prayer_name}&ptime={prayer_time}"
         resp = requests.get(full_url, timeout=10)
-        print(f"[INFO] Triggered Alexa for {prayer_name} at {prayer_time}. Status: {resp.status_code}")
+        print(f"[INFO] Triggered {prayer_name} at {prayer_time}. Status: {resp.status_code}")
     except Exception as e:
-        print(f"[ERROR] Failed to trigger Alexa webhook: {e}")
+        print(f"[ERROR] Failed to trigger Alexa: {e}")
 
 def run():
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-        print("[INFO] Manual dispatch — triggering Alexa now for testing.")
-        # For manual test, fetch current prayer
+        print("[INFO] Manual dispatch — triggering now for testing.")
         timings = get_luton_times()
         if timings:
             now = datetime.now(local_tz)
             hour = now.hour
-            prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
             if hour >= 2 and hour < 12:
                 prayer = "Fajr"
             elif hour >= 12 and hour < 16:
@@ -61,8 +83,7 @@ def run():
                 prayer = "Maghrib"
             else:
                 prayer = "Isha"
-            prayer_time = timings[prayer][:5]
-            trigger_alexa(prayer, prayer_time)
+            trigger_alexa(prayer, timings[prayer])
         return
 
     prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
@@ -71,8 +92,8 @@ def run():
     timings = get_luton_times(today)
 
     if timings:
-        print(f"[INFO] Prayer times for {today}: " +
-              ", ".join(f"{p}={timings[p][:5]}" for p in prayers))
+        print(f"[INFO] Adjusted times for {today}: " +
+              ", ".join(f"{p}={timings[p]}" for p in prayers))
 
     while True:
         now_local = datetime.now(local_tz)
@@ -83,16 +104,15 @@ def run():
             triggered_today.clear()
             timings = get_luton_times(today)
             if timings:
-                print(f"[INFO] Refreshed times for {today}: " +
-                      ", ".join(f"{p}={timings[p][:5]}" for p in prayers))
+                print(f"[INFO] New day times: " +
+                      ", ".join(f"{p}={timings[p]}" for p in prayers))
 
         if timings:
             current_time_str = now_local.strftime("%H:%M")
             for prayer in prayers:
-                prayer_time = timings[prayer][:5]
-                if current_time_str == prayer_time and prayer not in triggered_today:
-                    print(f"[INFO] {prayer} at {prayer_time} — triggering Alexa.")
-                    trigger_alexa(prayer, prayer_time)
+                if current_time_str == timings[prayer] and prayer not in triggered_today:
+                    print(f"[INFO] {prayer} at {timings[prayer]} — triggering.")
+                    trigger_alexa(prayer, timings[prayer])
                     triggered_today.add(prayer)
                     time.sleep(61)
                     break
