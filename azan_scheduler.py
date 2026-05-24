@@ -9,13 +9,13 @@ local_tz = pytz.timezone("Europe/London")
 # Manual offsets in minutes to match Islamic Relief Luton timetable exactly.
 # Based on today's comparison:
 #   API returns Isha 22:04, IR Luton says 22:13 → +9 minutes
-#   Adjust each prayer if needed after testing tomorrow.
+#   Check each prayer tomorrow and report any differences.
 OFFSETS = {
     "Fajr":    0,
     "Dhuhr":   0,
     "Asr":     0,
     "Maghrib": 0,
-    "Isha":    9,  # API is 9 mins behind IR Luton for Isha
+    "Isha":    9,
 }
 
 def get_luton_times(for_date=None):
@@ -39,7 +39,7 @@ def get_luton_times(for_date=None):
         # Apply offsets to match Islamic Relief Luton timetable
         adjusted = {}
         for prayer, offset in OFFSETS.items():
-            raw = timings[prayer][:5]  # "HH:MM"
+            raw = timings[prayer][:5]
             if offset != 0:
                 h, m = map(int, raw.split(":"))
                 total = h * 60 + m + offset
