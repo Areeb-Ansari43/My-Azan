@@ -6,9 +6,6 @@ import pytz
 
 local_tz = pytz.timezone("Europe/London")
 
-# =============================================================================
-# PRAYER TIMETABLE — Luton Central Mosque (June 2026)
-# =============================================================================
 TIMETABLE = {
     (2026, 6, 1):  {"Fajr": "02:55", "Dhuhr": "13:05", "Asr": "18:33", "Maghrib": "21:15", "Isha": "22:30"},
     (2026, 6, 2):  {"Fajr": "02:54", "Dhuhr": "13:05", "Asr": "18:33", "Maghrib": "21:16", "Isha": "22:31"},
@@ -48,77 +45,42 @@ def get_todays_times():
     return TIMETABLE.get(key, None)
 
 def trigger_voice_monkey(prayer_name, prayer_time):
-    """Trigger Voice Monkey to open Alexa skill and play Azan"""
-    voice_token = os.environ.get("VOICE_MONKEY_TOKEN")
-    voice_code = os.environ.get("VOICE_MONKEY_ACCESS_CODE")
+    token = os.environ.get("VOICE_MONKEY_TOKEN")
     
-    if not voice_token or not voice_code:
-        print("[WARN] VOICE_MONKEY_TOKEN or VOICE_MONKEY_ACCESS_CODE not set.")
+    if not token:
+        print("[WARN] VOICE_MONKEY_TOKEN secret not set")
         return
     
-    try:
-        vm_url = f"https://api-v2.voicemonkey.io/trigger?token={voice_token}&device=AzanLutonTrigger&access_code={voice_code}&prayer={prayer_name}"
-        resp = requests.get(vm_url, timeout=10)
-        print(f"[INFO] Voice Monkey triggered for {prayer_name} at {prayer_time}. Status: {resp.status_code}")
-    except Exception as e:
-        print(f"[ERROR] Failed to trigger Voice Monkey: {e}")
-
-def trigger_end_of_month_reminder():
-    """Optional: Send reminder to update timetable"""
-    voice_token = os.environ.get("VOICE_MONKEY_TOKEN")
-    voice_code = os.environ.get("VOICE_MONKEY_ACCESS_CODE")
+    device_id = "azanlutontrigger"
     
-    if voice_token and voice_code:
-        try:
-            vm_url = f"https://api-v2.voicemonkey.io/trigger?token={voice_token}&device=AzanLutonTrigger&access_code={voice_code}&prayer=reminder"
-            requests.get(vm_url, timeout=10)
-            print("[INFO] End of month reminder triggered.")
-        except Exception as e:
-            print(f"[ERROR] Failed to trigger reminder: {e}")
+    try:
+        url = f"https://api-v2.voicemonkey.io/trigger?token={token}&device={device_id}"
+        resp = requests.get(url, timeout=10)
+        print(f"[INFO] Voice Monkey triggered for {prayer_name} at {prayer_time}. Status: {resp.status_code}")
+        if resp.status_code == 200:
+            print(f"[SUCCESS] Azan should now play for {prayer_name}")
+    except Exception as e:
+        print(f"[ERROR] Voice Monkey failed: {e}")
 
 def run():
     now = datetime.now(local_tz)
 
-    # Check if it's the last day of the month — trigger reminder
-    import calendar
-    last_day = calendar.monthrange(now.year, now.month)[1]
-    if now.day == last_day:
-        print("[INFO] Last day of month — triggering timetable reminder.")
-        trigger_end_of_month_reminder()
-        return
-
     # Manual dispatch for testing
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-        print("[INFO] Manual dispatch — triggering now for testing.")
-        timings = get_todays_times()
-        if timings:
-            hour = now.hour
-            if hour >= 2 and hour < 12:
-                prayer = "Fajr"
-            elif hour >= 12 and hour < 16:
-                prayer = "Dhuhr"
-            elif hour >= 16 and hour < 19:
-                prayer = "Asr"
-            elif hour >= 19 and hour < 22:
-                prayer = "Maghrib"
-            else:
-                prayer = "Isha"
-            trigger_voice_monkey(prayer, timings[prayer])
-        else:
-            print("[WARN] No timetable found for today. Please update the timetable.")
+        print("[INFO] Manual dispatch — testing Voice Monkey trigger")
+        trigger_voice_monkey("Test", "now")
         return
 
-    # Main loop for continuous monitoring
+    # Main loop
     prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
     triggered_today = set()
     today = date.today()
     timings = get_todays_times()
 
     if timings:
-        print(f"[INFO] Times for {today}: " +
-              ", ".join(f"{p}={timings[p]}" for p in prayers))
+        print(f"[INFO] Times for {today}: " + ", ".join(f"{p}={timings[p]}" for p in prayers))
     else:
-        print(f"[WARN] No timetable found for {today}. Please update the timetable.")
+        print(f"[WARN] No timetable found for {today}")
         return
 
     while True:
@@ -130,17 +92,16 @@ def run():
             triggered_today.clear()
             timings = get_todays_times()
             if timings:
-                print(f"[INFO] New day times: " +
-                      ", ".join(f"{p}={timings[p]}" for p in prayers))
+                print(f"[INFO] New day times: " + ", ".join(f"{p}={timings[p]}" for p in prayers))
             else:
-                print(f"[WARN] No timetable for {today}. Please update.")
+                print(f"[WARN] No timetable for {today}")
                 return
 
         if timings:
             current_time_str = now_local.strftime("%H:%M")
             for prayer in prayers:
                 if current_time_str == timings[prayer] and prayer not in triggered_today:
-                    print(f"[INFO] {prayer} at {timings[prayer]} — triggering Azan.")
+                    print(f"[INFO] {prayer} at {timings[prayer]} — triggering Azan")
                     trigger_voice_monkey(prayer, timings[prayer])
                     triggered_today.add(prayer)
                     time.sleep(61)
