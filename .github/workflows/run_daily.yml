@@ -1,27 +1,103 @@
 name: Daily Azan Trigger
+
 on:
   push:
     branches:
       - main
   schedule:
-    - cron: '0 1 * * *'
-    - cron: '0 10 * * *'
-    - cron: '0 14 * * *'
-    - cron: '0 18 * * *'
-    - cron: '0 20 * * *'
+    # Run every minute during prayer time windows (UK time)
+    # Note: GitHub cron uses UTC, so adjust times
+    - cron: '*/1 1-6 * * *'   # 1 AM - 6 AM UTC (2 AM - 7 AM UK for Fajr)
+    - cron: '*/1 11-14 * * *' # 11 AM - 2 PM UTC (12 PM - 3 PM UK for Dhuhr)
+    - cron: '*/1 15-18 * * *' # 3 PM - 6 PM UTC (4 PM - 7 PM UK for Asr)
+    - cron: '*/1 19-21 * * *' # 7 PM - 9 PM UTC (8 PM - 10 PM UK for Maghrib/Isha)
   workflow_dispatch:
+
 jobs:
-  run-script:
+  check-prayer:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - name: Install Dependencies
-      run: pip install requests pytz
-    - name: Run Scheduler
+    - name: Check and Trigger Prayer
       env:
         VIRTUAL_DOORBELL_URL: ${{ secrets.VIRTUAL_DOORBELL_URL }}
-      run: python azan_scheduler.py
+        VOICE_MONKEY_TOKEN: ${{ secrets.VOICE_MONKEY_TOKEN }}
+        VOICE_MONKEY_ACCESS_CODE: ${{ secrets.VOICE_MONKEY_ACCESS_CODE }}
+      run: |
+        python -c "
+import os
+import requests
+from datetime import datetime
+import pytz
+import json
+
+local_tz = pytz.timezone('Europe/London')
+now = datetime.now(local_tz)
+current_time = now.strftime('%H:%M')
+
+# June 2026 Timetable - Luton Central Mosque
+TIMETABLE = {
+    1: {'Fajr': '02:55', 'Dhuhr': '13:05', 'Asr': '18:33', 'Maghrib': '21:15', 'Isha': '22:30'},
+    2: {'Fajr': '02:54', 'Dhuhr': '13:05', 'Asr': '18:33', 'Maghrib': '21:16', 'Isha': '22:31'},
+    3: {'Fajr': '02:53', 'Dhuhr': '13:05', 'Asr': '18:34', 'Maghrib': '21:17', 'Isha': '22:32'},
+    4: {'Fajr': '02:52', 'Dhuhr': '13:05', 'Asr': '18:34', 'Maghrib': '21:18', 'Isha': '22:33'},
+    5: {'Fajr': '02:51', 'Dhuhr': '13:05', 'Asr': '18:35', 'Maghrib': '21:19', 'Isha': '22:34'},
+    6: {'Fajr': '02:50', 'Dhuhr': '13:06', 'Asr': '18:35', 'Maghrib': '21:20', 'Isha': '22:35'},
+    7: {'Fajr': '02:49', 'Dhuhr': '13:06', 'Asr': '18:36', 'Maghrib': '21:21', 'Isha': '22:36'},
+    8: {'Fajr': '02:49', 'Dhuhr': '13:06', 'Asr': '18:36', 'Maghrib': '21:22', 'Isha': '22:37'},
+    9: {'Fajr': '02:48', 'Dhuhr': '13:06', 'Asr': '18:36', 'Maghrib': '21:22', 'Isha': '22:38'},
+    10: {'Fajr': '02:47', 'Dhuhr': '13:06', 'Asr': '18:37', 'Maghrib': '21:23', 'Isha': '22:39'},
+    11: {'Fajr': '02:47', 'Dhuhr': '13:07', 'Asr': '18:37', 'Maghrib': '21:24', 'Isha': '22:40'},
+    12: {'Fajr': '02:46', 'Dhuhr': '13:07', 'Asr': '18:38', 'Maghrib': '21:24', 'Isha': '22:41'},
+    13: {'Fajr': '02:46', 'Dhuhr': '13:07', 'Asr': '18:38', 'Maghrib': '21:25', 'Isha': '22:42'},
+    14: {'Fajr': '02:45', 'Dhuhr': '13:07', 'Asr': '18:38', 'Maghrib': '21:26', 'Isha': '22:43'},
+    15: {'Fajr': '02:45', 'Dhuhr': '13:07', 'Asr': '18:39', 'Maghrib': '21:26', 'Isha': '22:43'},
+    16: {'Fajr': '02:45', 'Dhuhr': '13:08', 'Asr': '18:39', 'Maghrib': '21:27', 'Isha': '22:44'},
+    17: {'Fajr': '02:45', 'Dhuhr': '13:08', 'Asr': '18:39', 'Maghrib': '21:27', 'Isha': '22:44'},
+    18: {'Fajr': '02:45', 'Dhuhr': '13:08', 'Asr': '18:40', 'Maghrib': '21:27', 'Isha': '22:45'},
+    19: {'Fajr': '02:45', 'Dhuhr': '13:08', 'Asr': '18:40', 'Maghrib': '21:28', 'Isha': '22:45'},
+    20: {'Fajr': '02:45', 'Dhuhr': '13:09', 'Asr': '18:40', 'Maghrib': '21:28', 'Isha': '22:46'},
+    21: {'Fajr': '02:45', 'Dhuhr': '13:09', 'Asr': '18:40', 'Maghrib': '21:28', 'Isha': '22:46'},
+    22: {'Fajr': '02:45', 'Dhuhr': '13:09', 'Asr': '18:41', 'Maghrib': '21:28', 'Isha': '22:46'},
+    23: {'Fajr': '02:46', 'Dhuhr': '13:09', 'Asr': '18:41', 'Maghrib': '21:29', 'Isha': '22:46'},
+    24: {'Fajr': '02:46', 'Dhuhr': '13:09', 'Asr': '18:41', 'Maghrib': '21:29', 'Isha': '22:46'},
+    25: {'Fajr': '02:47', 'Dhuhr': '13:10', 'Asr': '18:41', 'Maghrib': '21:29', 'Isha': '22:46'},
+    26: {'Fajr': '02:47', 'Dhuhr': '13:10', 'Asr': '18:41', 'Maghrib': '21:29', 'Isha': '22:46'},
+    27: {'Fajr': '02:48', 'Dhuhr': '13:10', 'Asr': '18:41', 'Maghrib': '21:29', 'Isha': '22:46'},
+    28: {'Fajr': '02:49', 'Dhuhr': '13:10', 'Asr': '18:41', 'Maghrib': '21:28', 'Isha': '22:46'},
+    29: {'Fajr': '02:49', 'Dhuhr': '13:10', 'Asr': '18:41', 'Maghrib': '21:28', 'Isha': '22:45'},
+    30: {'Fajr': '02:50', 'Dhuhr': '13:11', 'Asr': '18:41', 'Maghrib': '21:28', 'Isha': '22:45'},
+}
+
+today_times = TIMETABLE.get(now.day)
+
+if today_times:
+    for prayer, time in today_times.items():
+        if current_time == time:
+            print(f'[INFO] Time for {prayer} at {time} - triggering')
+            
+            # Trigger Virtual Doorbell (Speech)
+            webhook = os.environ.get('VIRTUAL_DOORBELL_URL')
+            if webhook:
+                try:
+                    separator = '&' if '?' in webhook else '?'
+                    url = f'{webhook}{separator}prayer={prayer}&ptime={time}'
+                    r = requests.get(url, timeout=10)
+                    print(f'[OK] Speech triggered: {r.status_code}')
+                except Exception as e:
+                    print(f'[ERROR] Speech failed: {e}')
+            
+            # Trigger Voice Monkey (MP3)
+            voice_token = os.environ.get('VOICE_MONKEY_TOKEN')
+            voice_code = os.environ.get('VOICE_MONKEY_ACCESS_CODE')
+            if voice_token and voice_code:
+                try:
+                    vm_url = f'https://api-v2.voicemonkey.io/trigger?token={voice_token}&device=PrayerTimeTrigger&access_code={voice_code}&prayer={prayer}'
+                    r = requests.get(vm_url, timeout=10)
+                    print(f'[OK] Voice Monkey triggered: {r.status_code}')
+                except Exception as e:
+                    print(f'[ERROR] Voice Monkey failed: {e}')
+"
