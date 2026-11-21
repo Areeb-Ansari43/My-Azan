@@ -6,39 +6,38 @@ import pytz
 
 local_tz = pytz.timezone("Europe/London")
 
-# October 2026 - Farley Hill Jame Masjid (start times, 24-hour, UK local time)
+# November 2026 - Farley Hill Jame Masjid (start times, 24-hour, UK local time)
 TIMETABLE = {
-    (2026, 10, 1): {"Fajr": "05:29", "Dhuhr": "12:56", "Asr": "16:43", "Maghrib": "18:44", "Isha": "19:58"},
-    (2026, 10, 2): {"Fajr": "05:30", "Dhuhr": "12:56", "Asr": "16:41", "Maghrib": "18:41", "Isha": "19:56"},
-    (2026, 10, 3): {"Fajr": "05:32", "Dhuhr": "12:56", "Asr": "16:39", "Maghrib": "18:39", "Isha": "19:54"},
-    (2026, 10, 4): {"Fajr": "05:34", "Dhuhr": "12:55", "Asr": "16:37", "Maghrib": "18:37", "Isha": "19:52"},
-    (2026, 10, 5): {"Fajr": "05:35", "Dhuhr": "12:55", "Asr": "16:35", "Maghrib": "18:35", "Isha": "19:50"},
-    (2026, 10, 6): {"Fajr": "05:37", "Dhuhr": "12:55", "Asr": "16:33", "Maghrib": "18:32", "Isha": "19:47"},
-    (2026, 10, 7): {"Fajr": "05:38", "Dhuhr": "12:54", "Asr": "16:31", "Maghrib": "18:30", "Isha": "19:45"},
-    (2026, 10, 8): {"Fajr": "05:40", "Dhuhr": "12:54", "Asr": "16:29", "Maghrib": "18:28", "Isha": "19:43"},
-    (2026, 10, 9): {"Fajr": "05:41", "Dhuhr": "12:54", "Asr": "16:27", "Maghrib": "18:26", "Isha": "19:41"},
-    (2026, 10, 10): {"Fajr": "05:43", "Dhuhr": "12:54", "Asr": "16:25", "Maghrib": "18:23", "Isha": "19:38"},
-    (2026, 10, 11): {"Fajr": "05:45", "Dhuhr": "12:53", "Asr": "16:23", "Maghrib": "18:21", "Isha": "19:36"},
-    (2026, 10, 12): {"Fajr": "05:46", "Dhuhr": "12:53", "Asr": "16:21", "Maghrib": "18:19", "Isha": "19:34"},
-    (2026, 10, 13): {"Fajr": "05:48", "Dhuhr": "12:53", "Asr": "16:19", "Maghrib": "18:17", "Isha": "19:32"},
-    (2026, 10, 14): {"Fajr": "05:50", "Dhuhr": "12:53", "Asr": "16:17", "Maghrib": "18:15", "Isha": "19:30"},
-    (2026, 10, 15): {"Fajr": "05:51", "Dhuhr": "12:52", "Asr": "16:15", "Maghrib": "18:12", "Isha": "19:27"},
-    (2026, 10, 16): {"Fajr": "05:53", "Dhuhr": "12:52", "Asr": "16:13", "Maghrib": "18:10", "Isha": "19:25"},
-    (2026, 10, 17): {"Fajr": "05:54", "Dhuhr": "12:52", "Asr": "16:11", "Maghrib": "18:08", "Isha": "19:23"},
-    (2026, 10, 18): {"Fajr": "05:56", "Dhuhr": "12:52", "Asr": "16:09", "Maghrib": "18:06", "Isha": "19:21"},
-    (2026, 10, 19): {"Fajr": "05:58", "Dhuhr": "12:52", "Asr": "16:07", "Maghrib": "18:04", "Isha": "19:19"},
-    (2026, 10, 20): {"Fajr": "05:59", "Dhuhr": "12:51", "Asr": "16:05", "Maghrib": "18:02", "Isha": "19:17"},
-    (2026, 10, 21): {"Fajr": "06:01", "Dhuhr": "12:51", "Asr": "16:04", "Maghrib": "18:00", "Isha": "19:15"},
-    (2026, 10, 22): {"Fajr": "06:03", "Dhuhr": "12:51", "Asr": "16:02", "Maghrib": "17:58", "Isha": "19:13"},
-    (2026, 10, 23): {"Fajr": "06:04", "Dhuhr": "12:51", "Asr": "16:00", "Maghrib": "17:56", "Isha": "19:11"},
-    (2026, 10, 24): {"Fajr": "06:06", "Dhuhr": "12:51", "Asr": "15:58", "Maghrib": "17:54", "Isha": "19:09"},
-    (2026, 10, 25): {"Fajr": "05:08", "Dhuhr": "11:51", "Asr": "14:56", "Maghrib": "16:52", "Isha": "18:07"},
-    (2026, 10, 26): {"Fajr": "05:09", "Dhuhr": "11:51", "Asr": "14:54", "Maghrib": "16:50", "Isha": "18:05"},
-    (2026, 10, 27): {"Fajr": "05:11", "Dhuhr": "11:51", "Asr": "14:52", "Maghrib": "16:48", "Isha": "18:03"},
-    (2026, 10, 28): {"Fajr": "05:13", "Dhuhr": "11:50", "Asr": "14:51", "Maghrib": "16:46", "Isha": "18:01"},
-    (2026, 10, 29): {"Fajr": "05:14", "Dhuhr": "11:50", "Asr": "14:49", "Maghrib": "16:44", "Isha": "17:59"},
-    (2026, 10, 30): {"Fajr": "05:16", "Dhuhr": "11:50", "Asr": "14:47", "Maghrib": "16:42", "Isha": "17:57"},
-    (2026, 10, 31): {"Fajr": "05:18", "Dhuhr": "11:50", "Asr": "14:45", "Maghrib": "16:40", "Isha": "17:55"},
+    (2026, 11, 1): {"Fajr": "05:20", "Asr": "14:44", "Maghrib": "16:38", "Isha": "18:00"},
+    (2026, 11, 2): {"Fajr": "05:21", "Asr": "14:42", "Maghrib": "16:36", "Isha": "17:58"},
+    (2026, 11, 3): {"Fajr": "05:23", "Asr": "14:40", "Maghrib": "16:35", "Isha": "17:57"},
+    (2026, 11, 4): {"Fajr": "05:25", "Asr": "14:39", "Maghrib": "16:33", "Isha": "17:55"},
+    (2026, 11, 5): {"Fajr": "05:26", "Asr": "14:37", "Maghrib": "16:31", "Isha": "17:54"},
+    (2026, 11, 6): {"Fajr": "05:28", "Asr": "14:35", "Maghrib": "16:29", "Isha": "17:52"},
+    (2026, 11, 7): {"Fajr": "05:30", "Asr": "14:34", "Maghrib": "16:28", "Isha": "17:51"},
+    (2026, 11, 8): {"Fajr": "05:31", "Asr": "14:32", "Maghrib": "16:26", "Isha": "17:50"},
+    (2026, 11, 9): {"Fajr": "05:33", "Asr": "14:31", "Maghrib": "16:24", "Isha": "17:48"},
+    (2026, 11, 10): {"Fajr": "05:35", "Asr": "14:29", "Maghrib": "16:23", "Isha": "17:47"},
+    (2026, 11, 11): {"Fajr": "05:36", "Asr": "14:28", "Maghrib": "16:21", "Isha": "17:46"},
+    (2026, 11, 12): {"Fajr": "05:38", "Asr": "14:26", "Maghrib": "16:20", "Isha": "17:44"},
+    (2026, 11, 13): {"Fajr": "05:40", "Asr": "14:25", "Maghrib": "16:18", "Isha": "17:43"},
+    (2026, 11, 14): {"Fajr": "05:41", "Asr": "14:24", "Maghrib": "16:17", "Isha": "17:42"},
+    (2026, 11, 15): {"Fajr": "05:43", "Asr": "14:22", "Maghrib": "16:16", "Isha": "17:41"},
+    (2026, 11, 16): {"Fajr": "05:45", "Asr": "14:21", "Maghrib": "16:14", "Isha": "17:40"},
+    (2026, 11, 17): {"Fajr": "05:46", "Asr": "14:20", "Maghrib": "16:13", "Isha": "17:39"},
+    (2026, 11, 18): {"Fajr": "05:48", "Asr": "14:19", "Maghrib": "16:12", "Isha": "17:38"},
+    (2026, 11, 19): {"Fajr": "05:49", "Asr": "14:18", "Maghrib": "16:10", "Isha": "17:37"},
+    (2026, 11, 20): {"Fajr": "05:51", "Asr": "14:16", "Maghrib": "16:09", "Isha": "17:36"},
+    (2026, 11, 21): {"Fajr": "05:53", "Asr": "14:15", "Maghrib": "16:08", "Isha": "17:35"},
+    (2026, 11, 22): {"Fajr": "05:54", "Asr": "14:14", "Maghrib": "16:07", "Isha": "17:34"},
+    (2026, 11, 23): {"Fajr": "05:56", "Asr": "14:13", "Maghrib": "16:06", "Isha": "17:33"},
+    (2026, 11, 24): {"Fajr": "05:57", "Asr": "14:12", "Maghrib": "16:05", "Isha": "17:32"},
+    (2026, 11, 25): {"Fajr": "05:59", "Asr": "14:12", "Maghrib": "16:04", "Isha": "17:32"},
+    (2026, 11, 26): {"Fajr": "06:00", "Asr": "14:11", "Maghrib": "16:03", "Isha": "17:31"},
+    (2026, 11, 27): {"Fajr": "06:02", "Asr": "14:10", "Maghrib": "16:02", "Isha": "17:30"},
+    (2026, 11, 28): {"Fajr": "06:03", "Asr": "14:09", "Maghrib": "16:01", "Isha": "17:30"},
+    (2026, 11, 29): {"Fajr": "06:04", "Asr": "14:09", "Maghrib": "16:01", "Isha": "17:29"},
+    (2026, 11, 30): {"Fajr": "06:06", "Asr": "14:08", "Maghrib": "16:00", "Isha": "17:29"},
 }
 
 def get_todays_times():
@@ -48,13 +47,13 @@ def get_todays_times():
 
 def trigger_voice_monkey(prayer_name, prayer_time):
     token = os.environ.get("VOICE_MONKEY_TOKEN")
-    
+
     if not token:
         print("[WARN] VOICE_MONKEY_TOKEN secret not set")
         return
-    
+
     device_id = "azanlutontrigger"
-    
+
     try:
         url = f"https://api-v2.voicemonkey.io/trigger?token={token}&device={device_id}"
         resp = requests.get(url, timeout=10)
@@ -74,7 +73,7 @@ def run():
         return
 
     # Main loop
-    prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
+    prayers = ["Fajr", "Asr", "Maghrib", "Isha"]
     triggered_today = set()
     today = date.today()
     timings = get_todays_times()
